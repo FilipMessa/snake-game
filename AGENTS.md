@@ -3,6 +3,7 @@
 ## Project Structure & Module Organization
 
 ```text
+assets/                      # Versioned README and documentation images
 src/
 ├── app/                     # Application composition and error boundary
 ├── features/game/

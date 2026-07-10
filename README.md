@@ -36,4 +36,4 @@ React hooks own keyboard and `requestAnimationFrame` integration. Components ren
 
 ## Screenshot
 
-![Neon Snake game ready screen](output/playwright/neon-snake.png)
+![Neon Snake game ready screen](assets/neon-snake.png)
