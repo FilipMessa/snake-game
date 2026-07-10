@@ -5,70 +5,8 @@ import type {
   GameState,
   Position,
 } from "./Game.types";
-import { GameConfigurationError, GameRandomSourceError } from "./Game.errors";
-
-function validateGameConfig(config: GameDependencies["config"]): void {
-  if (
-    !Number.isInteger(config.board.width) ||
-    !Number.isInteger(config.board.height) ||
-    config.board.width <= 0 ||
-    config.board.height <= 0
-  ) {
-    throw new GameConfigurationError(
-      "Board dimensions must be positive integers.",
-    );
-  }
-
-  if (
-    !Number.isInteger(config.snake.initialLength) ||
-    config.snake.initialLength <= 0
-  ) {
-    throw new GameConfigurationError(
-      "Snake initial length must be a positive integer.",
-    );
-  }
-
-  if (config.snake.initialLength > config.board.width) {
-    throw new GameConfigurationError(
-      "Snake initial length must fit within the board width.",
-    );
-  }
-
-  if (
-    !Number.isInteger(config.session.initialLives) ||
-    config.session.initialLives <= 0
-  ) {
-    throw new GameConfigurationError(
-      "Initial lives must be a positive integer.",
-    );
-  }
-
-  if (
-    !Number.isInteger(config.scoring.pointsPerFood) ||
-    config.scoring.pointsPerFood <= 0
-  ) {
-    throw new GameConfigurationError(
-      "Points per food must be a positive integer.",
-    );
-  }
-
-  const speedValues = [
-    config.speed.initialTickMs,
-    config.speed.minimumTickMs,
-    config.speed.progression.initialLevel,
-    config.speed.progression.foodsPerLevel,
-    config.speed.progression.tickReductionMs,
-  ];
-  if (speedValues.some((value) => !Number.isInteger(value) || value <= 0)) {
-    throw new GameConfigurationError("Speed values must be positive integers.");
-  }
-
-  if (config.speed.minimumTickMs > config.speed.initialTickMs) {
-    throw new GameConfigurationError(
-      "Minimum tick duration cannot exceed the initial tick duration.",
-    );
-  }
-}
+import { GameRandomSourceError } from "./Game.errors";
+import { validateGameConfig } from "./GameConfigValidation";
 
 function createStartingSnake(
   width: number,
