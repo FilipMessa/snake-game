@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "skills": {
+    "audit-codebase": {
+      "source": "agentgangsteria/ai-coding-skills",
+      "sourceType": "github",
+      "skillPath": "skills/audit-codebase/SKILL.md",
+      "computedHash": "951167e9bf897227086faf84eb7e0cc73d398a864c4954bed4138541d9175f47"
+    },
+    "code-style": {
+      "source": "agentgangsteria/ai-coding-skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-style/SKILL.md",
+      "computedHash": "514e338a4d5e392a48f970c1a5e18dd8744b3dc01907ad3340868caa039571e4"
+    },
+    "module-layout": {
+      "source": "agentgangsteria/ai-coding-skills",
+      "sourceType": "github",
+      "skillPath": "skills/module-layout/SKILL.md",
+      "computedHash": "f83d4e54cfc1dc53a2263ef6ca9583d414bb3c24b5faea04c5892dc20ad8a109"
+    },
+    "react-component-conventions": {
+      "source": "agentgangsteria/ai-coding-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-component-conventions/SKILL.md",
+      "computedHash": "8110c95d0057b6b37b7bc7ed157fd21f7f3f7135f00526f82a15d30f0f6fa814"
+    },
+    "skill-craft": {
+      "source": "agentgangsteria/ai-coding-skills",
+      "sourceType": "github",
+      "skillPath": "skills/skill-craft/SKILL.md",
+      "computedHash": "2a7c051415556b285b57e607de5d7fd5c9490212a25bd1cb67eff82ce20f2b10"
+    },
+    "sync-skills": {
+      "source": "agentgangsteria/ai-coding-skills",
+      "sourceType": "github",
+      "skillPath": "skills/sync-skills/SKILL.md",
+      "computedHash": "feb4e02dbed5eff89919cae100b98ccca1bb7e71566682ee2fc1a98fdb99248c"
+    },
+    "unit-test": {
+      "source": "agentgangsteria/ai-coding-skills",
+      "sourceType": "github",
+      "skillPath": "skills/unit-test/SKILL.md",
+      "computedHash": "6a86560bdf9b32ed25d53b05c54a1789568127f4c9b9b1ab2ec80004f598100c"
+    }
+  }
+}

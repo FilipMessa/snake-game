@@ -1,0 +1,38 @@
+# Domain Glossary
+
+- **Board**: The bounded grid in which gameplay occurs.
+- **Cell**: One discrete position on the board.
+- **Board cell intent**: A semantic rendering category—snake head, snake body, food, or empty—produced by `GameBoardService` for one cell.
+- **Snake**: The ordered sequence of occupied cells, beginning with the head.
+- **Head**: The leading snake cell that determines movement and collisions.
+- **Segment**: Any cell occupied by the snake.
+- **Direction**: The current movement heading: up, down, left, or right.
+- **Tick**: One game update in which the snake advances by one cell.
+- **Tick duration**: The time between movement ticks; a shorter duration means faster movement.
+- **Food**: An item occupying an unoccupied cell that causes growth by one segment when eaten.
+- **Active food**: The single food item whose cell is currently reserved on the board, including while it fades in.
+- **Growth**: Retaining the snake's tail during a food-consumption tick, increasing its length by one.
+- **Score**: Run-level progress, increased by the configured points per food (10 by default) and preserved after life loss.
+- **Direction command**: A keyboard-generated request to change direction.
+- **Legal direction command**: A direction command that is not directly opposite the snake's current heading.
+- **Buffered turn**: The single accepted direction change waiting to be applied by the next movement tick.
+- **Life**: One allowed collision before the run ends; a run begins with the configured number of lives (three by default).
+- **Life loss**: A collision that removes one life, resets the snake, and enters the ready state without resetting the score.
+- **Run**: One scoring session lasting until no lives remain.
+- **Collision**: The snake head entering a wall or a cell occupied by its body.
+- **Game configuration**: Centralized immutable values that tune board, scoring, timing, and starting-state rules.
+- **Ready state**: A stationary state before movement begins, entered at run start and after life loss.
+- **Active state**: The state in which movement ticks continue automatically and manual pausing is unavailable.
+- **Game-over state**: The terminal run state reached at zero lives; Enter begins a new run.
+- **Completed state**: The successful terminal state reached when the snake fills the board; Enter begins a new run.
+- **Module**: A cohesive implementation hidden behind one deliberate interface.
+- **Interface**: Everything a caller must know to use a module correctly, including invariants and ordering constraints.
+- **Seam**: A location where behavior can vary without editing its caller.
+- **Adapter**: A concrete implementation that connects browser behavior, such as time or keyboard input, at a seam.
+- **Service file**: A TypeScript module containing pure business functions for one cohesive behavior owner.
+- **Hook**: A React-specific module that manages state or effects and delegates business decisions to service functions.
+- **TDD slice**: One failing behavioral test followed by the smallest implementation that makes it pass.
+- **Structured error**: A typed domain failure carrying a stable category and descriptive message.
+- **Logging boundary**: The React integration point that catches and records an error exactly once.
+- **Game loop**: The `requestAnimationFrame`-driven hook that converts elapsed browser time into discrete domain tick events.
+- **Speed level**: A display value derived from configured speed progression and the number of foods eaten.
