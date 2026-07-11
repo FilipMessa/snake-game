@@ -142,6 +142,7 @@ describe("GameService", () => {
 
       expect(state).toEqual({
         status: "ready",
+        collisionLocked: false,
         snake: [
           { x: 10, y: 10 },
           { x: 9, y: 10 },
@@ -313,7 +314,7 @@ describe("GameService", () => {
       });
     });
 
-    it("loses one life and resets the snake after hitting a wall", () => {
+    it("loses one life and preserves active play after hitting a wall", () => {
       const ready = createGameState(TEST_DEPENDENCIES);
       const nearWall = {
         ...ready,
@@ -334,14 +335,14 @@ describe("GameService", () => {
       const recovered = transitionGame(nearWall, TICK_EVENT, TEST_DEPENDENCIES);
 
       expect(recovered).toMatchObject({
-        status: "ready",
+        status: "active",
         snake: [
-          { x: 10, y: 10 },
-          { x: 9, y: 10 },
-          { x: 8, y: 10 },
+          { x: 0, y: 10 },
+          { x: 1, y: 10 },
+          { x: 2, y: 10 },
         ],
         food: { x: 5, y: 5 },
-        direction: "right",
+        direction: "left",
         bufferedTurn: null,
         lives: 2,
         score: 40,
@@ -351,7 +352,7 @@ describe("GameService", () => {
       });
     });
 
-    it("loses one life after colliding with its own body", () => {
+    it("loses one life and preserves the snake after hitting its body", () => {
       const ready = createGameState(TEST_DEPENDENCIES);
       const curlingIntoItself = {
         ...ready,
@@ -375,12 +376,15 @@ describe("GameService", () => {
       );
 
       expect(recovered).toMatchObject({
-        status: "ready",
+        status: "active",
         lives: 2,
         snake: [
-          { x: 10, y: 10 },
-          { x: 9, y: 10 },
-          { x: 8, y: 10 },
+          { x: 2, y: 2 },
+          { x: 2, y: 3 },
+          { x: 1, y: 3 },
+          { x: 1, y: 2 },
+          { x: 1, y: 1 },
+          { x: 2, y: 1 },
         ],
       });
     });
@@ -436,11 +440,13 @@ describe("GameService", () => {
 
       expect(gameOver).toMatchObject({
         status: "game-over",
+        collisionLocked: true,
         lives: 0,
+        snake: finalLife.snake,
       });
     });
 
-    it("relocates preserved food when it overlaps the reset snake", () => {
+    it("preserves food after a nonterminal collision", () => {
       const ready = createGameState(TEST_DEPENDENCIES);
       const nearWall = {
         ...ready,
@@ -456,7 +462,84 @@ describe("GameService", () => {
 
       const recovered = transitionGame(nearWall, TICK_EVENT, TEST_DEPENDENCIES);
 
-      expect(recovered.food).toEqual({ x: 0, y: 0 });
+      expect(recovered.food).toEqual({ x: 10, y: 10 });
+    });
+
+    it("deducts only one life while the snake remains blocked", () => {
+      const ready = createGameState(TEST_DEPENDENCIES);
+      const nearWall = {
+        ...ready,
+        status: "active" as const,
+        snake: [
+          { x: 0, y: 10 },
+          { x: 1, y: 10 },
+          { x: 2, y: 10 },
+        ],
+        direction: "left" as const,
+      };
+      const firstBlockedTick = transitionGame(
+        nearWall,
+        TICK_EVENT,
+        TEST_DEPENDENCIES,
+      );
+
+      const secondBlockedTick = transitionGame(
+        firstBlockedTick,
+        TICK_EVENT,
+        TEST_DEPENDENCIES,
+      );
+
+      expect(secondBlockedTick).toMatchObject({
+        status: "active",
+        lives: 2,
+        snake: nearWall.snake,
+      });
+    });
+
+    it("re-enables collision damage after a successful move", () => {
+      const ready = createGameState(TEST_DEPENDENCIES);
+      const nearWall = {
+        ...ready,
+        status: "active" as const,
+        snake: [
+          { x: 0, y: 10 },
+          { x: 1, y: 10 },
+          { x: 2, y: 10 },
+        ],
+        direction: "left" as const,
+      };
+      const blocked = transitionGame(nearWall, TICK_EVENT, TEST_DEPENDENCIES);
+      const turningDown = transitionGame(
+        blocked,
+        TURN_DOWN_EVENT,
+        TEST_DEPENDENCIES,
+      );
+      const moved = transitionGame(turningDown, TICK_EVENT, TEST_DEPENDENCIES);
+      const turningLeft = transitionGame(
+        moved,
+        TURN_LEFT_EVENT,
+        TEST_DEPENDENCIES,
+      );
+
+      const blockedAgain = transitionGame(
+        turningLeft,
+        TICK_EVENT,
+        TEST_DEPENDENCIES,
+      );
+
+      expect(moved).toMatchObject({
+        collisionLocked: false,
+        lives: 2,
+        snake: [
+          { x: 0, y: 11 },
+          { x: 0, y: 10 },
+          { x: 1, y: 10 },
+        ],
+      });
+      expect(blockedAgain).toMatchObject({
+        collisionLocked: true,
+        lives: 1,
+      });
     });
 
     it("starts a completely new run when a terminal game restarts", () => {
@@ -483,6 +566,7 @@ describe("GameService", () => {
 
       expect(restarted).toEqual({
         status: "ready",
+        collisionLocked: false,
         snake: [
           { x: 10, y: 10 },
           { x: 9, y: 10 },
@@ -506,6 +590,7 @@ describe("GameService", () => {
       };
       const almostComplete = {
         status: "active" as const,
+        collisionLocked: false,
         snake: [
           { x: 0, y: 0 },
           { x: 0, y: 1 },

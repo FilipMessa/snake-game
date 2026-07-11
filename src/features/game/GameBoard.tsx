@@ -7,16 +7,25 @@ interface GameBoardProps {
   readonly board: GameConfig["board"];
   readonly state: GameState;
   readonly foodFadeInMs: number;
+  readonly lifeLossPulseMs: number;
   readonly maximumSizePx: number;
 }
 
-function deriveCellClassName(intent: BoardCellIntent): string {
+function deriveCellClassName(
+  intent: BoardCellIntent,
+  isCollisionLocked: boolean,
+): string {
+  const lifeLossClassName =
+    isCollisionLocked && (intent === "snake-head" || intent === "snake-body")
+      ? " animate-snake-life-loss"
+      : "";
+
   if (intent === "snake-head") {
-    return "z-10 rounded-[30%] bg-neon-cyan shadow-[0_0_12px_#22d3ee,0_0_24px_rgba(34,211,238,0.45)]";
+    return `z-10 rounded-[30%] bg-neon-cyan shadow-[0_0_12px_#22d3ee,0_0_24px_rgba(34,211,238,0.45)]${lifeLossClassName}`;
   }
 
   if (intent === "snake-body") {
-    return "rounded-[28%] bg-neon-lime shadow-[0_0_9px_rgba(163,230,53,0.8)]";
+    return `rounded-[28%] bg-neon-lime shadow-[0_0_9px_rgba(163,230,53,0.8)]${lifeLossClassName}`;
   }
 
   if (intent === "food") {
@@ -30,12 +39,13 @@ export const GameBoard: FC<GameBoardProps> = ({
   board,
   state,
   foodFadeInMs,
+  lifeLossPulseMs,
   maximumSizePx,
 }) => {
   const cells = createBoardCells(board, state).map(({ intent, key }) => (
     <span
       aria-hidden="true"
-      className={`min-h-0 min-w-0 border border-neon-grid/25 ${deriveCellClassName(intent)}`}
+      className={`min-h-0 min-w-0 border border-neon-grid/25 ${deriveCellClassName(intent, state.status === "active" && state.collisionLocked)}`}
       key={key}
     />
   ));
@@ -48,6 +58,7 @@ export const GameBoard: FC<GameBoardProps> = ({
       style={
         {
           "--food-fade-in-ms": `${foodFadeInMs}ms`,
+          "--life-loss-pulse-ms": `${lifeLossPulseMs}ms`,
           aspectRatio: `${board.width} / ${board.height}`,
           gridTemplateColumns: `repeat(${board.width}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${board.height}, minmax(0, 1fr))`,

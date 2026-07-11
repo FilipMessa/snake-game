@@ -63,14 +63,15 @@ button,
   }
 }
 
-@keyframes life-loss {
-  from {
-    background-color: rgb(244 114 182 / 32%);
-    box-shadow: inset 0 0 50px rgb(244 114 182 / 28%);
+@keyframes snake-life-loss {
+  0%,
+  50%,
+  100% {
+    opacity: 1;
   }
-  to {
-    background-color: rgb(5 5 16 / 78%);
-    box-shadow: inset 0 0 0 rgb(244 114 182 / 0%);
+  25%,
+  75% {
+    opacity: 0.15;
   }
 }
 
@@ -79,8 +80,8 @@ button,
   transform: scale(0.72);
 }
 
-.animate-life-loss {
-  animation: life-loss var(--life-loss-pulse-ms, 260ms) ease-out both;
+.animate-snake-life-loss {
+  animation: snake-life-loss var(--life-loss-pulse-ms, 260ms) ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {

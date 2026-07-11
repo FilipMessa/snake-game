@@ -6,6 +6,8 @@ Accepted
 
 Supersedes [ADR 024](./024-audio-deferred.md).
 
+The life-loss music lifecycle is superseded by [ADR 029](./029-continuous-life-loss-recovery.md).
+
 ## Context
 
 The game now includes a selected CC0 music track and six CC0 electronic sound effects. Audio must respect browser user activation, offer independently persistent music and effects controls, and never affect gameplay when playback or loading fails.
@@ -18,7 +20,7 @@ Derive semantic audio cues from consecutive committed `GameState` snapshots in a
 
 Use `useGameAudio` as the React seam. It owns the previous-state reference, one-time browser user-activation handling, persistent preferences, and cleanup. Its browser implementation uses preloaded `HTMLAudioElement` instances for the looped music track and short OGG effects. It catches playback failures and leaves the game playable.
 
-Music and effects are independently enabled by default and persist their preferences locally. Music starts or resumes only while the game is active, pauses after life loss, and stops after game over or victory. Effects may overlap only for food consumption plus a speed level-up.
+Music and effects are independently enabled by default and persist their preferences locally. Music plays while the game is active, including after a nonterminal life loss, and stops after game over or victory. Effects may overlap only for food consumption plus a speed level-up.
 
 ## Consequences
 

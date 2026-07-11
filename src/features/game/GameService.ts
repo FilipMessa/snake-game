@@ -72,6 +72,7 @@ export function createGameState({
 
   return {
     status: "ready",
+    collisionLocked: false,
     snake,
     food: chooseFood(config.board.width, config.board.height, snake, random),
     direction: "right",
@@ -123,37 +124,29 @@ function isInsideBoard(
   );
 }
 
-function recoverFromCollision(
-  state: GameState,
-  { config, random }: GameDependencies,
-): GameState {
+function recoverFromCollision(state: GameState): GameState {
+  if (state.collisionLocked) {
+    return {
+      ...state,
+      bufferedTurn: null,
+    };
+  }
+
   const lives = state.lives - 1;
   if (lives === 0) {
     return {
       ...state,
       status: "game-over",
+      collisionLocked: true,
       lives,
       bufferedTurn: null,
     };
   }
 
-  const snake = createStartingSnake(
-    config.board.width,
-    config.board.height,
-    config.snake.initialLength,
-  );
-  const food = state.food;
-  const foodOverlapsSnake =
-    food !== null && snake.some((segment) => positionsMatch(segment, food));
-
   return {
     ...state,
-    status: "ready",
-    snake,
-    food: foodOverlapsSnake
-      ? chooseFood(config.board.width, config.board.height, snake, random)
-      : food,
-    direction: "right",
+    status: "active",
+    collisionLocked: true,
     bufferedTurn: null,
     lives,
   };
@@ -227,13 +220,13 @@ export function transitionGame(
     const direction = state.bufferedTurn ?? state.direction;
     const nextHead = movePosition(head, direction);
     if (!isInsideBoard(nextHead, config.board)) {
-      return recoverFromCollision(state, { config, random });
+      return recoverFromCollision(state);
     }
 
     const ateFood = state.food !== null && positionsMatch(nextHead, state.food);
     const collisionBody = ateFood ? state.snake : state.snake.slice(0, -1);
     if (collisionBody.some((segment) => positionsMatch(segment, nextHead))) {
-      return recoverFromCollision(state, { config, random });
+      return recoverFromCollision(state);
     }
 
     const snake = ateFood
@@ -250,6 +243,7 @@ export function transitionGame(
     return {
       ...state,
       status: ateFood && food === null ? "completed" : state.status,
+      collisionLocked: false,
       snake,
       food,
       direction,

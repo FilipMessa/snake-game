@@ -50,7 +50,7 @@ describe("Game", () => {
     );
   });
 
-  it("uses animation frames to advance play and report a lost life", () => {
+  it("keeps playing and blinks the snake after a lost life", () => {
     const frames: FrameRequestCallback[] = [];
     let nextFrameId = 1;
     vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
@@ -85,5 +85,11 @@ describe("Game", () => {
       screen.getByText("Life lost. 2 lives remaining."),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Lives 2")).toBeInTheDocument();
+    expect(screen.queryByText("Ready?")).not.toBeInTheDocument();
+    expect(
+      screen
+        .getByRole("img", { name: /snake game board/i })
+        .querySelectorAll(".animate-snake-life-loss"),
+    ).toHaveLength(3);
   });
 });

@@ -4,15 +4,17 @@
 
 Accepted
 
+The life-loss reset decision is superseded by [ADR 029](./029-continuous-life-loss-recovery.md).
+
 ## Context
 
-New runs and life-loss recovery need a deterministic, safe snake placement.
+New runs need a deterministic, safe snake placement.
 
 ## Decision
 
 The snake starts with three segments, centered horizontally on the board, with its head facing right. It remains in a ready state until any legal direction command is received. The left command is initially illegal because it directly reverses the snake.
 
-The same snake placement and ready state are restored after life loss. Initial length belongs in the centralized game configuration; placement is calculated from board dimensions.
+Initial length belongs in the centralized game configuration; placement is calculated from board dimensions. Life loss does not recreate the starting state.
 
 ## Consequences
 

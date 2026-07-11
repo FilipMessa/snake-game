@@ -4,6 +4,8 @@
 
 Accepted
 
+The life-loss food-placement decision is superseded by [ADR 029](./029-continuous-life-loss-recovery.md).
+
 ## Context
 
 Food consumption defines the snake's growth and contributes to the run's progression.
@@ -14,7 +16,7 @@ When the snake's head enters the food cell, the snake consumes the food and grow
 
 Each consumed food item adds 10 points to the run's score. Immediately after consumption, the game randomly selects a new unoccupied cell for the replacement food. Exactly one food item exists at a time. The replacement is immediately active and edible while visually fading in over 150 milliseconds.
 
-Food is normally preserved after life loss. If resetting the snake would overlap that food, the game relocates it using the same placement and fade-in rules.
+Food remains in its current cell after a nonterminal life loss because the snake is not reset.
 
 ## Consequences
 
