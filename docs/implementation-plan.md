@@ -1,6 +1,6 @@
 # Implementation Plan
 
-**Status:** Implemented and verified against the completion gate.
+**Status:** Core game implemented and verified. Audio delivery is planned in Phase 5.
 
 Implementation proceeds in vertical TDD slices. Within each capability, write one failing behavior test, add only enough production code to pass, and repeat. Tests exercise the agreed public seams rather than private helpers.
 
@@ -34,6 +34,32 @@ Implementation proceeds in vertical TDD slices. Within each capability, write on
 2. Apply the neon Tailwind theme and responsive square layout.
 3. Add food fade, life-loss feedback, reduced-motion behavior, and accessibility status text.
 
+## Phase 5: Browser Audio
+
+This phase implements [ADR 028](./adr/028-browser-audio-architecture.md) without changing the pure `GameService` seam. Work in vertical TDD slices: make a transition-to-cue behavior fail first, then add only the audio implementation required to satisfy it.
+
+1. Add `GameAudioCueService.ts` with the single pure public seam:
+
+   ```ts
+   deriveAudioCues(previous: GameState, next: GameState): ReadonlyArray<GameAudioCue>;
+   ```
+
+   Add `GameAudioCueService.test.ts` first. Cover start/resume, food, food-plus-level-up ordering, life loss, terminal game over, victory, and the silent transitions. In particular, verify that terminal outcomes replace food/collision cues rather than layering them.
+
+2. Add the private browser playback implementation in `GameAudioPlayer.ts`. Centralize asset paths, preload the selected OGG files, permit the food-plus-level-up overlap, loop `slampe.ogg`, and ensure pause/reset/disposal behavior is idempotent. Catch `HTMLAudioElement.play()` rejections; log through `LoggerService` without changing game state or surfacing an error overlay.
+
+3. Add `hooks/useGameAudio.ts` as the React seam. It receives committed `GameState`, retains the previous snapshot, forwards pure cues to the player after commit, and owns one-time capture-phase `keydown`/`pointerdown` activation handling. It must not add audio state or browser calls to `GameService` or `useGameController`.
+
+4. Implement music lifecycle in the hook/player: play or resume only while status is `active`; pause on non-terminal life loss; stop and reset at game over or victory; resume after the next legal start. Effects and music default to enabled.
+
+5. Add resilient local preference persistence for independent `musicEnabled` and `effectsEnabled` values. Treat missing, malformed, unavailable, or throwing browser storage as the enabled defaults. Keep persistence details behind `useGameAudio`; callers receive only preferences and toggle callbacks.
+
+6. Add `AudioControls.tsx`, with two visible, keyboard-accessible controls and clear labels for Music and Effects. The controls are silent. Compose it in `Game.tsx` beside the status information, and pass only the small `useGameAudio` interface that the controls need.
+
+7. Add focused React tests for the controls and hook integration. Mock only browser media and storage boundaries. Verify persisted preference restoration, independent toggles, cleanup, and that playback failures do not interrupt gameplay. Do not duplicate `GameService` rule coverage.
+
+8. Perform manual browser verification: first keyboard interaction unlocks audio; each accepted event produces its intended cue once; food plus level-up overlap cleanly; life loss pauses music; terminal outcomes stop it; reload restores settings; keyboard game controls and accessibility text remain intact.
+
 ## Completion Gate
 
-Run the full test suite, TypeScript check, ESLint, Prettier check, and production build. Review the result against every accepted ADR and manually verify keyboard controls, speed changes, all terminal states, responsive layout, and Strict Mode cleanup.
+Run the full test suite, TypeScript check, ESLint, Prettier check, and production build. Review the result against every accepted ADR and manually verify keyboard controls, speed changes, all terminal states, responsive layout, Strict Mode cleanup, browser audio activation, audio preference restoration, and silent-degradation behavior.

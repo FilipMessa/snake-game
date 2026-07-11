@@ -6,6 +6,8 @@ import { GameBoard } from "./GameBoard";
 import { LiveMessage } from "./LiveMessage";
 import { GameOverlay } from "./GameOverlay";
 import { ScorePanel } from "./ScorePanel";
+import { AudioControls } from "./AudioControls";
+import { useGameAudio } from "./hooks/useGameAudio";
 import { useGameController } from "./hooks/useGameController";
 
 interface GameProps {
@@ -14,6 +16,7 @@ interface GameProps {
 
 export const Game: FC<GameProps> = ({ dependencies }) => {
   const state = useGameController(dependencies);
+  const { preferences, toggleEffects, toggleMusic } = useGameAudio(state);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 py-6 text-white">
@@ -30,6 +33,14 @@ export const Game: FC<GameProps> = ({ dependencies }) => {
           <p className="hidden font-mono text-[10px] uppercase tracking-wider text-neon-muted sm:block">
             Arrows / WASD
           </p>
+        </div>
+        <div className="mb-3 flex justify-end">
+          <AudioControls
+            effectsEnabled={preferences.effectsEnabled}
+            musicEnabled={preferences.musicEnabled}
+            onToggleEffects={toggleEffects}
+            onToggleMusic={toggleMusic}
+          />
         </div>
         <ScorePanel
           lives={state.lives}
