@@ -17,11 +17,12 @@
 - **Legal direction command**: A direction command that is not directly opposite the snake's current heading.
 - **Buffered turn**: The single accepted direction change waiting to be applied by the next movement tick.
 - **Life**: One allowed collision before the run ends; a run begins with the configured number of lives (three by default).
-- **Life loss**: A collision that removes one life, resets the snake, and enters the ready state without resetting the score.
+- **Life loss**: A collision that removes one life while preserving the snake and run progress; nonterminal life loss keeps play active.
+- **Collision lock**: The state after a collision has removed one life; further blocked ticks cannot remove another life until the snake completes a legal move.
 - **Run**: One scoring session lasting until no lives remain.
-- **Collision**: The snake head entering a wall or a cell occupied by its body.
+- **Collision**: An attempted move that would place the snake head outside the board or in a non-vacating body cell; the failed move is not applied.
 - **Game configuration**: Centralized immutable values that tune board, scoring, timing, and starting-state rules.
-- **Ready state**: A stationary state before movement begins, entered at run start and after life loss.
+- **Ready state**: The stationary state before movement begins at the start of a run.
 - **Active state**: The state in which movement ticks continue automatically and manual pausing is unavailable.
 - **Game-over state**: The terminal run state reached at zero lives; Enter begins a new run.
 - **Completed state**: The successful terminal state reached when the snake fills the board; Enter begins a new run.

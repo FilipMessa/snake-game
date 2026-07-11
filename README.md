@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Use the arrow keys or WASD to steer. The snake begins with three lives, gains 10 points per food, and speeds up every five foods. Wall and self-collisions cost one life; press Enter to restart after game over or victory.
+Use the arrow keys or WASD to steer. The snake begins with three lives, gains 10 points per food, and speeds up every five foods. Wall and self-collisions cost one life while preserving the snake's position and length; steer away after the snake blinks. Press Enter to restart after game over or victory.
 
 ## Verification
 

@@ -46,6 +46,7 @@ export type GameEvent =
 
 export type GameState = Readonly<{
   status: GameStatus;
+  collisionLocked: boolean;
   snake: ReadonlyArray<Position>;
   food: Position | null;
   direction: Direction;

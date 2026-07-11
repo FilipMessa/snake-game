@@ -5,6 +5,7 @@ import type { GameState } from "../Game.types";
 
 const READY_STATE: GameState = {
   status: "ready",
+  collisionLocked: false,
   snake: [{ x: 2, y: 2 }],
   food: { x: 1, y: 1 },
   direction: "right",
@@ -43,7 +44,11 @@ describe("GameAudioCueService", () => {
 
     it("returns only a life-loss cue for a nonterminal collision", () => {
       const previous = { ...READY_STATE, status: "active" as const };
-      const next = { ...READY_STATE, lives: 2 };
+      const next = {
+        ...previous,
+        collisionLocked: true,
+        lives: 2,
+      };
 
       const cues = deriveAudioCues(previous, next);
 

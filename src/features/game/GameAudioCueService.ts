@@ -17,7 +17,7 @@ export function deriveAudioCues(
 
   if (
     previous.status === "active" &&
-    next.status === "ready" &&
+    next.status === "active" &&
     next.lives < previous.lives
   ) {
     return ["life-lost"];

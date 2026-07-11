@@ -1,19 +1,18 @@
 import type { FC } from "react";
 
-import type { GameDependencies, GameState } from "./Game.types";
+import type { GameState } from "./Game.types";
 
 interface LiveMessageProps {
-  readonly initialLives: GameDependencies["config"]["session"]["initialLives"];
   readonly state: GameState;
 }
 
-export const LiveMessage: FC<LiveMessageProps> = ({ initialLives, state }) => {
+export const LiveMessage: FC<LiveMessageProps> = ({ state }) => {
   const message =
     state.status === "game-over"
       ? `Game over. Final score ${state.score}.`
       : state.status === "completed"
         ? `You win. Final score ${state.score}.`
-        : state.status === "ready" && state.lives < initialLives
+        : state.status === "active" && state.collisionLocked
           ? `Life lost. ${state.lives} lives remaining.`
           : "";
 

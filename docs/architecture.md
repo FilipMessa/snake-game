@@ -81,6 +81,7 @@ classDiagram
 
   class GameState {
     +status: GameStatus
+    +collisionLocked: boolean
     +snake: ReadonlyArray~Position~
     +food: Position?
     +direction: Direction
@@ -151,7 +152,8 @@ stateDiagram-v2
   [*] --> Ready: createGameState
   Ready --> Active: legal direction
   Active --> Active: direction or safe tick
-  Active --> Ready: collision / lives remain
+  Active --> Active: collision / lives remain / lock damage
+  Active --> Active: safe tick / clear collision lock
   Active --> GameOver: collision / zero lives
   Active --> Completed: snake fills board
   GameOver --> Ready: restart event
@@ -167,4 +169,5 @@ stateDiagram-v2
 - Randomness uses a function type, not a class hierarchy; production supplies `Math.random` and tests supply deterministic closures.
 - `useGameController` owns keyboard listeners and React state updates; `useGameLoop` owns animation-frame timing.
 - `GameBoard.tsx` maps cell intents to Tailwind classes and DOM elements; it does not calculate cell positions or inspect snake occupancy.
+- A nonterminal collision preserves active state and all board entities. `collisionLocked` prevents repeated damage until a successful movement tick clears it.
 - Tests exercise each approved public service seam; helper functions remain implementation details.

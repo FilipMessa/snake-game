@@ -53,24 +53,18 @@ export const Game: FC<GameProps> = ({ dependencies }) => {
         <GameBoard
           board={dependencies.config.board}
           foodFadeInMs={UI_CONFIG.animation.foodFadeInMs}
+          lifeLossPulseMs={UI_CONFIG.animation.lifeLossPulseMs}
           maximumSizePx={UI_CONFIG.board.maximumSizePx}
           state={state}
         />
-        <GameOverlay
-          initialLives={dependencies.config.session.initialLives}
-          lifeLossPulseMs={UI_CONFIG.animation.lifeLossPulseMs}
-          state={state}
-        />
+        <GameOverlay state={state} />
       </section>
 
       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-muted sm:text-xs">
         Eat the pulse · Avoid the grid ·{" "}
         {dependencies.config.session.initialLives} lives
       </p>
-      <LiveMessage
-        initialLives={dependencies.config.session.initialLives}
-        state={state}
-      />
+      <LiveMessage state={state} />
     </main>
   );
 };

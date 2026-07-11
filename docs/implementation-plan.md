@@ -1,6 +1,6 @@
 # Implementation Plan
 
-**Status:** Core game implemented and verified. Audio delivery is planned in Phase 5.
+**Status:** Core game and browser audio implemented. Continuous life-loss recovery is implemented in Phase 6.
 
 Implementation proceeds in vertical TDD slices. Within each capability, write one failing behavior test, add only enough production code to pass, and repeat. Tests exercise the agreed public seams rather than private helpers.
 
@@ -50,7 +50,7 @@ This phase implements [ADR 028](./adr/028-browser-audio-architecture.md) without
 
 3. Add `hooks/useGameAudio.ts` as the React seam. It receives committed `GameState`, retains the previous snapshot, forwards pure cues to the player after commit, and owns one-time capture-phase `keydown`/`pointerdown` activation handling. It must not add audio state or browser calls to `GameService` or `useGameController`.
 
-4. Implement music lifecycle in the hook/player: play or resume only while status is `active`; pause on non-terminal life loss; stop and reset at game over or victory; resume after the next legal start. Effects and music default to enabled.
+4. Implement music lifecycle in the hook/player: play or resume only while status is `active`; continue through nonterminal life loss; stop and reset at game over or victory. Effects and music default to enabled.
 
 5. Add resilient local preference persistence for independent `musicEnabled` and `effectsEnabled` values. Treat missing, malformed, unavailable, or throwing browser storage as the enabled defaults. Keep persistence details behind `useGameAudio`; callers receive only preferences and toggle callbacks.
 
@@ -58,7 +58,18 @@ This phase implements [ADR 028](./adr/028-browser-audio-architecture.md) without
 
 7. Add focused React tests for the controls and hook integration. Mock only browser media and storage boundaries. Verify persisted preference restoration, independent toggles, cleanup, and that playback failures do not interrupt gameplay. Do not duplicate `GameService` rule coverage.
 
-8. Perform manual browser verification: first keyboard interaction unlocks audio; each accepted event produces its intended cue once; food plus level-up overlap cleanly; life loss pauses music; terminal outcomes stop it; reload restores settings; keyboard game controls and accessibility text remain intact.
+8. Perform manual browser verification: first keyboard interaction unlocks audio; each accepted event produces its intended cue once; food plus level-up overlap cleanly; life loss keeps music playing; terminal outcomes stop it; reload restores settings; keyboard game controls and accessibility text remain intact.
+
+## Phase 6: Continuous Life-Loss Recovery
+
+This phase implements [ADR 029](./adr/029-continuous-life-loss-recovery.md) through the approved `transitionGame`, `Game`, and `deriveAudioCues` seams.
+
+1. Replace reset-on-collision recovery with active-state preservation of the snake, food, direction, score, progress, and speed.
+2. Add a collision lock so repeated blocked ticks deduct only one life, then clear that lock after a successful move.
+3. Keep final-life collision terminal while preserving the snake's last valid cells.
+4. Move life-loss feedback from the overlay to a 260 millisecond snake-only blink, with reduced-motion suppression and a polite live-region announcement.
+5. Derive the life-loss cue from an active-to-active life decrement and keep background music synchronized with active play.
+6. Update the ADRs, glossary, architecture state model, README behavior, and focused public-seam tests.
 
 ## Completion Gate
 
