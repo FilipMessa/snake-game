@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by [ADR 028](./028-browser-audio-architecture.md)
 
 ## Context
 

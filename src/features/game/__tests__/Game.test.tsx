@@ -1,11 +1,28 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DEFAULT_GAME_CONFIG } from "../Game.config";
 import { Game } from "../Game";
 
 describe("Game", () => {
+  beforeEach(() => {
+    vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(
+      () => undefined,
+    );
+    vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(
+      () => undefined,
+    );
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+  });
+
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
   });
 
@@ -24,6 +41,13 @@ describe("Game", () => {
       screen.getByRole("img", { name: /snake game board/i }),
     ).toBeVisible();
     expect(screen.getByText(/use arrow keys or wasd/i)).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Music on" }));
+
+    expect(screen.getByRole("button", { name: "Music off" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 
   it("uses animation frames to advance play and report a lost life", () => {
