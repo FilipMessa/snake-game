@@ -8,7 +8,7 @@ src/
 ├── app/                     # Composition and error boundary
 ├── features/game/
 │   ├── __tests__/           # Feature tests
-│   ├── hooks/               # Input and animation adapters
+│   ├── hooks/               # Single-intent React modules and thin facades
 │   ├── Game*.tsx            # Feature components
 │   ├── GameService.ts       # Pure gameplay transitions
 │   ├── GameBoardService.ts  # Pure board-cell projection
@@ -44,6 +44,10 @@ Use two-space indentation and Prettier defaults. Use `PascalCase` for React comp
 
 - Keep React feature components presentational: render view state returned by hooks and forward user actions through hook-provided callbacks.
 - Put stateful feature orchestration in feature hooks and pure business decisions in service modules. Hooks may compose services and browser adapters; components must not call business services directly or own cross-module workflow state.
+- Give each feature hook one cohesive business or use-case intent. Loading, applying, and saving data may remain together when they implement one use case; split independent capabilities or reasons to change even when the hook is short. Hook size and `useEffect` count are not split criteria.
+- Keep composition hooks as thin facades that coordinate single-intent hooks and expose one stable view interface. Facades may coordinate cross-module workflows but must delegate business branching, validation, and transformations to pure service modules.
+- Do not create a hook for a pure calculation. Keep simple render-only choices in the component and move complex view-model derivation or formatting to a pure `*ViewService.ts` module.
+- Keep hooks feature-local by default. Move a hook to `shared/` only after a second concrete consumer needs the same semantics; do not generalize for hypothetical reuse.
 - Put every tunable gameplay or render/UI value in `Game.config.ts`; keep feature-local browser, media, and persistence constants within their owning feature module.
 - Use `requestAnimationFrame` for the game loop with cleanup and background-tab elapsed-time reset; do not introduce `setInterval` or `setTimeout` for movement.
 - Pure domain services throw typed errors and never log. React boundaries and browser adapters log non-fatal platform failures once through `LoggerService`; direct `console.*` calls are not allowed elsewhere.

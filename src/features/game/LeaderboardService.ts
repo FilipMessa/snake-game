@@ -1,7 +1,23 @@
+import type { GameStatus } from "./Game.types";
+
 export type LeaderboardEntry = Readonly<{
   playerName: string;
   score: number;
   recordedAt: string;
+}>;
+
+export type CompletedRunTransition = Readonly<{
+  playerName: string | null;
+  previousStatus: GameStatus;
+  recordedAt: string;
+  score: number;
+  status: GameStatus;
+}>;
+
+export type RecordCompletedRunResult = Readonly<{
+  didRecord: boolean;
+  entries: ReadonlyArray<LeaderboardEntry>;
+  recordedEntry: LeaderboardEntry | null;
 }>;
 
 export class LeaderboardValidationError extends Error {
@@ -40,6 +56,41 @@ function compareLeaderboardEntries(
   }
 
   return Date.parse(right.recordedAt) - Date.parse(left.recordedAt);
+}
+
+function isTerminalStatus(status: GameStatus): boolean {
+  return status === "game-over" || status === "completed";
+}
+
+export function recordCompletedRun(
+  entries: ReadonlyArray<LeaderboardEntry>,
+  transition: CompletedRunTransition,
+  maximumEntries: number,
+): RecordCompletedRunResult {
+  if (
+    transition.playerName === null ||
+    isTerminalStatus(transition.previousStatus) ||
+    !isTerminalStatus(transition.status)
+  ) {
+    return { didRecord: false, entries, recordedEntry: null };
+  }
+
+  const result: LeaderboardEntry = {
+    playerName: transition.playerName,
+    score: transition.score,
+    recordedAt: transition.recordedAt,
+  };
+  const updatedEntries = recordLeaderboardResult(
+    entries,
+    result,
+    maximumEntries,
+  );
+
+  return {
+    didRecord: true,
+    entries: updatedEntries,
+    recordedEntry: updatedEntries.includes(result) ? result : null,
+  };
 }
 
 export function recordLeaderboardResult(

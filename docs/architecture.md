@@ -1,18 +1,27 @@
 # Architecture
 
-The React application delegates every gameplay decision to pure functions in `GameService.ts`. The `useGameController` composition hook owns gameplay and player-session state, coordinates feature hooks, and owns browser input effects. Local leaderboard rules remain in pure player-name and leaderboard modules, while `useLeaderboard` composes those rules with the browser-storage adapter. Presentational components only render state and emit user intent.
+The React application delegates business decisions to pure modules. `useGameController` is a thin composition facade over single-intent game-session, player-session, keyboard, timing, leaderboard, audio, and responsive-presentation hooks. `useLeaderboard` and `useGameAudio` are smaller facades over their own use-case hooks. Presentational components render view state and emit user intent; browser adapters own platform I/O.
 
 ## Architecture Plan
 
 ```mermaid
 flowchart LR
   subgraph Browser[Browser and React integration]
-    Keyboard[Keyboard events]
+    Keyboard[useKeyboardControls]
     Loop[useGameLoop]
     RAF[requestAnimationFrame]
-    Hook[useGameController]
-    AudioHook[useGameAudio]
-    LeaderboardHook[useLeaderboard]
+    Hook[useGameController facade]
+    GameSessionHook[useGameSession]
+    PlayerSessionHook[usePlayerSession]
+    AudioHook[useGameAudio facade]
+    AudioPlaybackHook[useGameAudioPlayback]
+    AudioPreferencesHook[useAudioPreferences]
+    AudioPreferencesStorage[BrowserAudioPreferencesStorage]
+    JsonStorage[JsonStorage]
+    BrowserStorage[BrowserStorage]
+    LeaderboardHook[useLeaderboard facade]
+    LeaderboardEntriesHook[useLeaderboardEntries]
+    LeaderboardScrollHook[useLeaderboardAutoScroll]
     Storage[BrowserLeaderboardStorage singleton]
     LocalStorage[localStorage]
   end
@@ -42,10 +51,12 @@ flowchart LR
   end
 
   Keyboard -->|direction or restart event| Hook
+  Hook --> GameSessionHook
+  Hook --> PlayerSessionHook
   RAF -->|frame timestamp| Loop
   Loop -->|tick event when elapsed| Hook
-  Hook -->|state, event, dependencies| Service
-  Service -->|new immutable state| Hook
+  GameSessionHook -->|state, event, dependencies| Service
+  Service -->|new immutable state| GameSessionHook
   Service --- Create
   Service --- Transition
   Create --> Config
@@ -53,14 +64,22 @@ flowchart LR
   Transition --> Config
   Transition --> Random
   NameForm -->|optional input| Hook
-  Hook -->|input and random source| PlayerNameService
-  PlayerNameService -->|resolved player name| Hook
+  PlayerSessionHook -->|input and random source| PlayerNameService
+  PlayerNameService -->|resolved player name| PlayerSessionHook
   Hook --> LeaderboardHook
   Hook --> AudioHook
+  AudioHook --> AudioPlaybackHook
+  AudioHook --> AudioPreferencesHook
+  AudioPreferencesHook --> AudioPreferencesStorage
+  AudioPreferencesStorage --> JsonStorage
   AudioHook -->|audio state and actions| Hook
-  LeaderboardHook -->|record and rank| LeaderboardService
-  LeaderboardHook --> Storage
-  Storage --> LocalStorage
+  LeaderboardHook --> LeaderboardEntriesHook
+  LeaderboardHook --> LeaderboardScrollHook
+  LeaderboardEntriesHook -->|record completed run| LeaderboardService
+  LeaderboardEntriesHook --> Storage
+  Storage --> JsonStorage
+  JsonStorage --> BrowserStorage
+  BrowserStorage --> LocalStorage
 
   App --> Game
   Game --> Hook
@@ -74,7 +93,7 @@ flowchart LR
   Game --> NameForm
   Game --> PlayerPanel
   Game --> Leaderboard
-  LeaderboardHook -->|ranked entries| Hook
+  LeaderboardHook -->|ranked entries and refs| Hook
   Hook -->|view state| Game
   Tailwind -. styles .-> Game
   Tailwind -. styles .-> Board
@@ -130,13 +149,30 @@ classDiagram
     +useGameController(dependencies) UseGameControllerResult
   }
 
+  class useGameSession {
+    <<hook>>
+    +useGameSession(dependencies) UseGameSessionResult
+  }
+
+  class usePlayerSession {
+    <<hook>>
+    +usePlayerSession(maximumLength, random) UsePlayerSessionResult
+  }
+
+  class useKeyboardControls {
+    <<hook>>
+    +useKeyboardControls(options) void
+  }
+
   class PlayerNameService {
     <<module>>
+    +canChangePlayer(status) boolean
     +resolvePlayerName(input, maximumLength, random) string
   }
 
   class LeaderboardService {
     <<module>>
+    +recordCompletedRun(entries, transition, maximumEntries) RecordCompletedRunResult
     +recordLeaderboardResult(entries, result, maximumEntries) LeaderboardEntry[]
     +restoreLeaderboard(value, maximumEntries) LeaderboardEntry[]
   }
@@ -147,14 +183,40 @@ classDiagram
     +save(entries) void
   }
 
+  class JsonStorage {
+    <<module>>
+    +load(...loadArguments) Value
+    +save(value) void
+  }
+
   class useLeaderboard {
     <<hook>>
-    +useLeaderboard(state, playerName, maximumEntries) LeaderboardEntry[]
+    +useLeaderboard(state, playerName, maximumEntries) UseLeaderboardResult
+  }
+
+  class useLeaderboardEntries {
+    <<hook>>
+    +useLeaderboardEntries(state, playerName, maximumEntries) UseLeaderboardEntriesResult
+  }
+
+  class useLeaderboardAutoScroll {
+    <<hook>>
+    +useLeaderboardAutoScroll(currentEntry, playerName, status) UseLeaderboardAutoScrollResult
   }
 
   class useGameAudio {
     <<hook>>
     +useGameAudio(state) UseGameAudioResult
+  }
+
+  class useGameAudioPlayback {
+    <<hook>>
+    +useGameAudioPlayback(state, preferences) void
+  }
+
+  class useAudioPreferences {
+    <<hook>>
+    +useAudioPreferences() UseAudioPreferencesResult
   }
 
   class Game {
@@ -196,14 +258,22 @@ classDiagram
   GameService --> GameDependencies
   GameService --> GameState
   GameService --> GameEvent
-  useGameController --> GameService
+  useGameController --> useGameSession
+  useGameSession --> GameService
   useGameController --> GameBoardService
   Game --> useGameController
   useGameController --> PlayerNameService
+  useGameController --> usePlayerSession
+  useGameController --> useKeyboardControls
   useGameController --> useLeaderboard
   useGameController --> useGameAudio
-  useLeaderboard --> LeaderboardService
-  useLeaderboard --> BrowserLeaderboardStorage
+  useLeaderboard --> useLeaderboardEntries
+  useLeaderboard --> useLeaderboardAutoScroll
+  useLeaderboardEntries --> LeaderboardService
+  useLeaderboardEntries --> BrowserLeaderboardStorage
+  BrowserLeaderboardStorage --> JsonStorage
+  useGameAudio --> useGameAudioPlayback
+  useGameAudio --> useAudioPreferences
   Game *-- GameBoard
   GameBoard --> GameBoardViewService
   GameBoardService --> GameState
@@ -236,11 +306,13 @@ stateDiagram-v2
 - `GameBoardViewService.ts` maps a cell intent and animation state to its Tailwind classes.
 - Dependencies such as configuration and randomness enter through function arguments.
 - Randomness uses a function type, not a class hierarchy; production supplies `Math.random` and tests supply deterministic closures.
-- `useGameController` is the feature composition seam. It owns gameplay and player-session state, exposes view state and user actions to `Game.tsx`, and coordinates `useGameLoop`, `useLeaderboard`, `useGameAudio`, `GameBoardService`, and pure services.
-- `PlayerNameService.ts` owns player-name normalization, length validation, and random fallback generation; it imports neither React nor browser storage.
-- `LeaderboardService.ts` owns persisted-entry validation, immutable ranking, tie-breaking, and the configured entry limit.
-- `LeaderboardStorage.ts` owns the testable versioned JSON persistence implementation. `BrowserLeaderboardStorage.ts` composes it with `window.localStorage` and the logger as one production singleton that reports each load or save failure at most once.
-- `useLeaderboard` records only transitions into a terminal state and keeps in-memory entries usable when persistence fails.
+- `useGameController` is the thin feature composition seam. It exposes one view interface and coordinates `useGameSession`, `usePlayerSession`, `useKeyboardControls`, `useGameLoop`, `useLeaderboard`, `useGameAudio`, `useNarrowBoard`, and pure projection modules.
+- `useGameSession` owns React game state and delegates every transition to `GameService`; `usePlayerSession` owns page-session player identity; `useKeyboardControls` owns only keyboard-to-game-event adaptation.
+- `PlayerNameService.ts` owns player-name normalization, length validation, random fallback generation, and the rule for when player identity may change; it imports neither React nor browser storage.
+- `LeaderboardService.ts` owns terminal-transition eligibility, entry creation and validation, immutable ranking, tie-breaking, highlighting eligibility, and the configured entry limit.
+- `LeaderboardStorage.ts` owns its versioned key and domain restoration. `AudioPreferencesStorage.ts` owns its key, defaults, and validation. Both compose the feature-local `JsonStorage.ts` mechanism for serialization, key-value I/O, and report-once failures; their browser adapters supply `window.localStorage` and the logger.
+- `useLeaderboard` is a thin facade over `useLeaderboardEntries` and `useLeaderboardAutoScroll`. The entries hook reacts to game lifecycle and storage outcomes but delegates recording decisions to `LeaderboardService`; the auto-scroll hook owns only DOM refs and scrolling.
+- `useGameAudio` is a thin facade over `useGameAudioPlayback` and `useAudioPreferences`. Audio preference rules live in `AudioPreferencesStorage.ts`; shared JSON persistence mechanics and browser composition stay behind their feature-local modules.
 - `Game.tsx` is presentational and consumes only the view state and actions returned by hooks; leaderboard concerns do not enter `GameState` or `GameService`.
 - `GameBoard.tsx` maps pre-projected cell intents to Tailwind classes and DOM elements; it does not call domain services, calculate cell positions, or inspect snake occupancy.
 - A nonterminal collision preserves active state and all board entities. `collisionLocked` prevents repeated damage until a successful movement tick clears it.

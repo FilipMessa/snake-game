@@ -19,6 +19,7 @@ export const Game: FC<GameProps> = ({ dependencies }) => {
     audio,
     boardAreaRef,
     boardCells,
+    canChangePlayer,
     changePlayer,
     isCollisionLocked,
     isNarrowBoard,
@@ -54,7 +55,7 @@ export const Game: FC<GameProps> = ({ dependencies }) => {
         </div>
         {playerName !== null && (
           <PlayerPanel
-            canChange={state.status !== "active"}
+            canChange={canChangePlayer}
             onChange={changePlayer}
             playerName={playerName}
           />

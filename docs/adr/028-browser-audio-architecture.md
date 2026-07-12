@@ -18,7 +18,7 @@ The game domain currently exposes only `createGameState` and `transitionGame`. A
 
 Derive semantic audio cues from consecutive committed `GameState` snapshots in a pure `GameAudioCueService` module. The cues are start, food eaten, level-up, life lost, game over, and victory. Normal ticks, turns, food spawning, restart, and audio-control interactions are silent.
 
-Use `useGameAudio` as the React seam. It owns the previous-state reference, one-time browser user-activation handling, persistent preferences, and cleanup. Its browser implementation uses preloaded `HTMLAudioElement` instances for the looped music track and short OGG effects. It catches playback failures and leaves the game playable.
+Use `useGameAudio` as a thin React facade. It composes `useGameAudioPlayback`, which owns the previous-state reference, one-time browser user-activation handling, player synchronization, and cleanup, with `useAudioPreferences`, which owns preference state and actions. A dedicated audio-preferences storage module owns its versioned key, defaults, and validation while the feature-local JSON storage module owns serialization, key-value I/O, and report-once error handling shared with leaderboard persistence. The browser adapter supplies `localStorage` and logging. The playback implementation uses preloaded `HTMLAudioElement` instances for the looped music track and short OGG effects. It catches playback failures and leaves the game playable.
 
 Music and effects are independently enabled by default and persist their preferences locally. Music plays while the game is active, including after a nonterminal life loss, and stops after game over or victory. Effects may overlap only for food consumption plus a speed level-up.
 
@@ -26,6 +26,6 @@ Music and effects are independently enabled by default and persist their prefere
 
 - `GameService.ts` remains pure and retains its approved two-function domain seam.
 - `GameAudioCueService.ts` is the unit-test seam for transition-to-cue rules.
-- Browser playback, user activation, storage, and failed media playback stay localized to the audio hook and its private implementation.
-- Audio controls are presentation-only and use the hook's small returned interface.
+- Browser playback and user activation stay localized to the playback hook and player module; preference persistence stays localized to its storage module and hook.
+- Audio controls are presentation-only and use the facade hook's small returned interface.
 - The game works silently if assets cannot load or a browser rejects playback.

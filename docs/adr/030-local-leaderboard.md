@@ -28,12 +28,12 @@ The leaderboard retains only the best ten entries. Entries are ordered by descen
 
 The leaderboard is always rendered below the board with rank, player name, score, and date columns, plus an empty state when no entry exists. The UI remains in English. There is no leaderboard-clear control, consent banner, or storage information message.
 
-The implementation uses four cohesive modules:
+The implementation separates four cohesive responsibilities:
 
 1. A pure player-name module owns normalization, length validation, and fallback generation behind one small interface. Randomness is supplied explicitly.
-2. A pure leaderboard module owns entry validation, recording, ordering, and the ten-entry limit behind a small interface.
-3. A browser-storage adapter owns the versioned `localStorage` key, JSON serialization, loading, and saving. No generic repository port is introduced because only one adapter exists.
-4. A React integration module owns session state, detects a transition into a terminal game state, records that result once, and composes the pure modules with the storage adapter. It does not move leaderboard concerns into `GameService`.
+2. A pure leaderboard module owns terminal-transition eligibility, entry creation and validation, recording, ordering, highlighting eligibility, and the ten-entry limit behind a small interface.
+3. A leaderboard persistence module owns the versioned key and domain restoration. A feature-local JSON storage module owns serialization, key-value I/O, and report-once error handling shared with audio preferences; the browser adapter supplies `localStorage` and logging. This concrete mechanism is not a generic repository port.
+4. A thin React facade composes one hook for the record-results use case with one hook for leaderboard auto-scroll presentation. The results hook owns React state and lifecycle, delegates terminal-transition decisions to the pure leaderboard module, and composes it with the storage adapter. The auto-scroll hook owns only refs and DOM scrolling. Neither moves leaderboard concerns into `GameService`.
 
 If browser storage is unavailable or contains invalid data, the game continues with an empty in-memory leaderboard. New results remain usable until reload, and the non-fatal platform failure is logged once through the existing logging seam.
 
