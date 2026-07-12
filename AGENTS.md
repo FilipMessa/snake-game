@@ -59,3 +59,17 @@ Use imperative commit subjects. Pull requests should describe behavior, checks, 
 ## Assets & Git Workflow
 
 Version README/documentation images in `assets/` and browser-served game audio in `public/audio/`. Ignore editor, Playwright, dependency, build, and coverage artifacts. Direct pushes to `main` require an explicit request.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs are tracked in GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The project uses the five standard triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context project with its glossary in `docs/glossary.md` and decisions in `docs/adr/`. See `docs/agents/domain.md`.
