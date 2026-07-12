@@ -1,21 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  canChangePlayer,
   PlayerNameValidationError,
   resolvePlayerName,
 } from "../PlayerNameService";
 
 describe("PlayerNameService", () => {
-  describe("canChangePlayer", () => {
-    it("allows changing player only outside active gameplay", () => {
-      expect(canChangePlayer("ready")).toBe(true);
-      expect(canChangePlayer("game-over")).toBe(true);
-      expect(canChangePlayer("completed")).toBe(true);
-      expect(canChangePlayer("active")).toBe(false);
-    });
-  });
-
   describe("resolvePlayerName", () => {
     it("returns trimmed player input", () => {
       const input = "  Ada  ";

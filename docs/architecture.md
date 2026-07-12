@@ -166,7 +166,6 @@ classDiagram
 
   class PlayerNameService {
     <<module>>
-    +canChangePlayer(status) boolean
     +resolvePlayerName(input, maximumLength, random) string
   }
 
@@ -262,7 +261,6 @@ classDiagram
   useGameSession --> GameService
   useGameController --> GameBoardService
   Game --> useGameController
-  useGameController --> PlayerNameService
   useGameController --> usePlayerSession
   useGameController --> useKeyboardControls
   useGameController --> useLeaderboard
@@ -308,7 +306,7 @@ stateDiagram-v2
 - Randomness uses a function type, not a class hierarchy; production supplies `Math.random` and tests supply deterministic closures.
 - `useGameController` is the thin feature composition seam. It exposes one view interface and coordinates `useGameSession`, `usePlayerSession`, `useKeyboardControls`, `useGameLoop`, `useLeaderboard`, `useGameAudio`, `useNarrowBoard`, and pure projection modules.
 - `useGameSession` owns React game state and delegates every transition to `GameService`; `usePlayerSession` owns page-session player identity; `useKeyboardControls` owns only keyboard-to-game-event adaptation.
-- `PlayerNameService.ts` owns player-name normalization, length validation, random fallback generation, and the rule for when player identity may change; it imports neither React nor browser storage.
+- `PlayerNameService.ts` owns player-name normalization, length validation, and random fallback generation; it imports neither React nor browser storage. `useGameController` derives whether player identity may change from the current game status as part of its view interface.
 - `LeaderboardService.ts` owns terminal-transition eligibility, entry creation and validation, immutable ranking, tie-breaking, highlighting eligibility, and the configured entry limit.
 - `LeaderboardStorage.ts` owns its versioned key and domain restoration. `AudioPreferencesStorage.ts` owns its key, defaults, and validation. Both compose the feature-local `JsonStorage.ts` mechanism for serialization, key-value I/O, and report-once failures; their browser adapters supply `window.localStorage` and the logger.
 - `useLeaderboard` is a thin facade over `useLeaderboardEntries` and `useLeaderboardAutoScroll`. The entries hook reacts to game lifecycle and storage outcomes but delegates recording decisions to `LeaderboardService`; the auto-scroll hook owns only DOM refs and scrolling.
