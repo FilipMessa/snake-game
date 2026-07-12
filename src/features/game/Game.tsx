@@ -3,11 +3,13 @@ import type { FC } from "react";
 import { UI_CONFIG } from "./Game.config";
 import type { GameDependencies } from "./Game.types";
 import { GameBoard } from "./GameBoard";
+import { Leaderboard } from "./Leaderboard";
 import { LiveMessage } from "./LiveMessage";
 import { GameOverlay } from "./GameOverlay";
+import { PlayerNameForm } from "./PlayerNameForm";
+import { PlayerPanel } from "./PlayerPanel";
 import { ScorePanel } from "./ScorePanel";
 import { AudioControls } from "./AudioControls";
-import { useGameAudio } from "./hooks/useGameAudio";
 import { useGameController } from "./hooks/useGameController";
 
 interface GameProps {
@@ -15,8 +17,16 @@ interface GameProps {
 }
 
 export const Game: FC<GameProps> = ({ dependencies }) => {
-  const state = useGameController(dependencies);
-  const { preferences, toggleEffects, toggleMusic } = useGameAudio(state);
+  const {
+    audio,
+    boardCells,
+    changePlayer,
+    leaderboardEntries,
+    isCollisionLocked,
+    playerName,
+    state,
+    submitPlayer,
+  } = useGameController(dependencies);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 py-6 text-white">
@@ -36,12 +46,19 @@ export const Game: FC<GameProps> = ({ dependencies }) => {
         </div>
         <div className="mb-3 flex justify-end">
           <AudioControls
-            effectsEnabled={preferences.effectsEnabled}
-            musicEnabled={preferences.musicEnabled}
-            onToggleEffects={toggleEffects}
-            onToggleMusic={toggleMusic}
+            effectsEnabled={audio.preferences.effectsEnabled}
+            musicEnabled={audio.preferences.musicEnabled}
+            onToggleEffects={audio.toggleEffects}
+            onToggleMusic={audio.toggleMusic}
           />
         </div>
+        {playerName !== null && (
+          <PlayerPanel
+            canChange={state.status !== "active"}
+            onChange={changePlayer}
+            playerName={playerName}
+          />
+        )}
         <ScorePanel
           lives={state.lives}
           score={state.score}
@@ -52,12 +69,20 @@ export const Game: FC<GameProps> = ({ dependencies }) => {
       <section className="relative" aria-label="Game area">
         <GameBoard
           board={dependencies.config.board}
+          cells={boardCells}
           foodFadeInMs={UI_CONFIG.animation.foodFadeInMs}
           lifeLossPulseMs={UI_CONFIG.animation.lifeLossPulseMs}
           maximumSizePx={UI_CONFIG.board.maximumSizePx}
-          state={state}
+          isCollisionLocked={isCollisionLocked}
         />
-        <GameOverlay state={state} />
+        {playerName === null ? (
+          <PlayerNameForm
+            maximumLength={UI_CONFIG.leaderboard.maximumPlayerNameLength}
+            onSubmit={submitPlayer}
+          />
+        ) : (
+          <GameOverlay state={state} />
+        )}
       </section>
 
       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-muted sm:text-xs">
@@ -65,6 +90,7 @@ export const Game: FC<GameProps> = ({ dependencies }) => {
         {dependencies.config.session.initialLives} lives
       </p>
       <LiveMessage state={state} />
+      <Leaderboard entries={leaderboardEntries} />
     </main>
   );
 };

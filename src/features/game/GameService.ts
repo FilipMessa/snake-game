@@ -239,10 +239,11 @@ export function transitionGame(
     const food = ateFood
       ? chooseFood(config.board.width, config.board.height, snake, random)
       : state.food;
+    const isCompleted = ateFood && food === null;
 
     return {
       ...state,
-      status: ateFood && food === null ? "completed" : state.status,
+      status: isCompleted ? "completed" : state.status,
       collisionLocked: false,
       snake,
       food,

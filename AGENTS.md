@@ -42,6 +42,8 @@ Use two-space indentation and Prettier defaults. Use `PascalCase` for React comp
 
 ## Runtime Boundaries & Configuration
 
+- Keep React feature components presentational: render view state returned by hooks and forward user actions through hook-provided callbacks.
+- Put stateful feature orchestration in feature hooks and pure business decisions in service modules. Hooks may compose services and browser adapters; components must not call business services directly or own cross-module workflow state.
 - Put every tunable gameplay or render/UI value in `Game.config.ts`; keep feature-local browser, media, and persistence constants within their owning feature module.
 - Use `requestAnimationFrame` for the game loop with cleanup and background-tab elapsed-time reset; do not introduce `setInterval` or `setTimeout` for movement.
 - Pure domain services throw typed errors and never log. React boundaries and browser adapters log non-fatal platform failures once through `LoggerService`; direct `console.*` calls are not allowed elsewhere.

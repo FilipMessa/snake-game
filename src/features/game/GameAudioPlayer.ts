@@ -33,21 +33,39 @@ function createAudio(source: string, loop = false): HTMLAudioElement {
   return audio;
 }
 
-function restartAndPlay(audio: HTMLAudioElement, source: string): void {
+function reportPlaybackFailure(
+  source: string,
+  error: unknown,
+  reportedFailureSources: Set<string>,
+): void {
+  if (reportedFailureSources.has(source)) {
+    return;
+  }
+
+  reportedFailureSources.add(source);
+  logError("Unable to play game audio.", error, { source });
+}
+
+function restartAndPlay(
+  audio: HTMLAudioElement,
+  source: string,
+  reportedFailureSources: Set<string>,
+): void {
   audio.currentTime = 0;
-  play(audio, source);
+  play(audio, source, reportedFailureSources);
 }
 
 function play(
   audio: HTMLAudioElement,
   source: string,
+  reportedFailureSources: Set<string>,
   onFailure?: () => void,
 ): void {
   const playback = audio.play();
 
   if (playback !== undefined) {
     void playback.catch((error: unknown) => {
-      logError("Unable to play game audio.", error, { source });
+      reportPlaybackFailure(source, error, reportedFailureSources);
       onFailure?.();
     });
   }
@@ -89,6 +107,7 @@ export function createGameAudioPlayer(): GameAudioPlayer {
     effectsEnabled: true,
   };
   let musicIsActive = false;
+  const reportedFailureSources = new Set<string>();
 
   return {
     dispose(): void {
@@ -104,7 +123,9 @@ export function createGameAudioPlayer(): GameAudioPlayer {
         return;
       }
 
-      cues.forEach((cue) => restartAndPlay(effects[cue], effects[cue].src));
+      cues.forEach((cue) =>
+        restartAndPlay(effects[cue], effects[cue].src, reportedFailureSources),
+      );
     },
     setPreferences(nextPreferences: AudioPreferences): void {
       preferences = nextPreferences;
@@ -120,7 +141,7 @@ export function createGameAudioPlayer(): GameAudioPlayer {
     },
     syncMusic(status: GameStatus): void {
       if (status === "active" && preferences.musicEnabled && !musicIsActive) {
-        play(music, MUSIC_SOURCE, () => {
+        play(music, MUSIC_SOURCE, reportedFailureSources, () => {
           musicIsActive = false;
         });
         musicIsActive = true;

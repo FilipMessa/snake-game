@@ -20,6 +20,10 @@
 - **Life loss**: A collision that removes one life while preserving the snake and run progress; nonterminal life loss keeps play active.
 - **Collision lock**: The state after a collision has removed one life; further blocked ticks cannot remove another life until the snake completes a legal move.
 - **Run**: One scoring session lasting until no lives remain.
+- **Player**: The page-session participant to whom completed runs are attributed.
+- **Player name**: The trimmed display name associated with a player and their runs. Empty input produces a generated `Player-1234` name. The name is retained only for the current page session and may be changed explicitly outside active play.
+- **Leaderboard entry**: One locally persisted terminal-run result containing the player name, final score, and precise recording timestamp. Entries remain independent even when player names are identical.
+- **Leaderboard**: The locally persisted, ranked collection of at most ten leaderboard entries, ordered by score and then recency.
 - **Collision**: An attempted move that would place the snake head outside the board or in a non-vacating body cell; the failed move is not applied.
 - **Game configuration**: Centralized immutable values that tune board, scoring, timing, and starting-state rules.
 - **Ready state**: The stationary state before movement begins at the start of a run.
