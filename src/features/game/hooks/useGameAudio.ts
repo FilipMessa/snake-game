@@ -19,6 +19,26 @@ const DEFAULT_AUDIO_PREFERENCES: AudioPreferences = {
   musicEnabled: true,
   effectsEnabled: true,
 };
+let hasReportedLoadError = false;
+let hasReportedSaveError = false;
+
+function reportLoadError(error: unknown): void {
+  if (hasReportedLoadError) {
+    return;
+  }
+
+  hasReportedLoadError = true;
+  logError("Unable to load audio preferences.", error);
+}
+
+function reportSaveError(error: unknown): void {
+  if (hasReportedSaveError) {
+    return;
+  }
+
+  hasReportedSaveError = true;
+  logError("Unable to save audio preferences.", error);
+}
 
 function loadAudioPreferences(): AudioPreferences {
   try {
@@ -43,7 +63,7 @@ function loadAudioPreferences(): AudioPreferences {
       return parsedPreferences as AudioPreferences;
     }
   } catch (error) {
-    logError("Unable to load audio preferences.", error);
+    reportLoadError(error);
     return DEFAULT_AUDIO_PREFERENCES;
   }
 
@@ -57,7 +77,7 @@ function saveAudioPreferences(preferences: AudioPreferences): void {
       JSON.stringify(preferences),
     );
   } catch (error) {
-    logError("Unable to save audio preferences.", error);
+    reportSaveError(error);
   }
 }
 

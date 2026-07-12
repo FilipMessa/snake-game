@@ -4,6 +4,8 @@
 
 Accepted
 
+Superseded by [ADR 030](./030-local-leaderboard.md).
+
 ## Context
 
 Persisting scores would introduce browser storage, migration behavior, and another adapter seam before the core game is complete.
