@@ -4,6 +4,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -131,18 +132,29 @@ describe("Game", () => {
       expect(logError).toHaveBeenCalledOnce();
     });
 
-    it("renders an empty leaderboard below the game", () => {
+    it("renders the leaderboard in the board overlay before play", () => {
       const dependencies = {
         config: DEFAULT_GAME_CONFIG,
         random: () => 0,
       };
 
       render(<Game dependencies={dependencies} />);
+      const gameArea = screen.getByRole("region", { name: "Game area" });
+      const leaderboardHeading = screen.getByRole("heading", {
+        name: "Leaderboard",
+      });
 
-      expect(
-        screen.getByRole("heading", { name: "Leaderboard" }),
-      ).toBeVisible();
+      expect(gameArea).toContainElement(leaderboardHeading);
       expect(screen.getByText("No scores yet.")).toBeVisible();
+
+      fireEvent.click(screen.getByRole("button", { name: "Play" }));
+
+      expect(screen.getByText("Ready?")).toBeVisible();
+      expect(gameArea).toContainElement(leaderboardHeading);
+
+      fireEvent.keyDown(window, { key: "ArrowRight" });
+
+      expect(leaderboardHeading).not.toBeInTheDocument();
     });
 
     it("renders persisted leaderboard entries with a display date", () => {
@@ -206,6 +218,9 @@ describe("Game", () => {
       fireEvent.click(screen.getByRole("button", { name: "Music on" }));
 
       expect(screen.getByText("Game Over")).toBeVisible();
+      expect(
+        screen.getByRole("heading", { name: "Leaderboard" }),
+      ).toBeVisible();
       expect(screen.getAllByRole("cell", { name: "Ada" })).toHaveLength(1);
       expect(screen.getByRole("cell", { name: "0" })).toBeVisible();
       expect(screen.getByRole("cell", { name: "11.07.2026" })).toBeVisible();
@@ -220,6 +235,68 @@ describe("Game", () => {
       expect(screen.getByText("Ready?")).toBeVisible();
       expect(screen.getByLabelText("Score 0")).toBeVisible();
       expect(screen.getAllByRole("cell", { name: "Ada" })).toHaveLength(1);
+    });
+
+    it("marks only the newly retained tied result until the next run", () => {
+      const frames: FrameRequestCallback[] = [];
+      let nextFrameId = 1;
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-07-11T12:00:00.000Z"));
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation(
+        (callback) => {
+          frames.push(callback);
+          return nextFrameId++;
+        },
+      );
+      vi.spyOn(window, "cancelAnimationFrame").mockImplementation(
+        () => undefined,
+      );
+      const dependencies = {
+        config: {
+          ...DEFAULT_GAME_CONFIG,
+          board: { width: 4, height: 4 },
+          session: { initialLives: 1 },
+        },
+        random: () => 0,
+      };
+      const entries: ReadonlyArray<LeaderboardEntry> = [
+        {
+          playerName: "Ada",
+          score: 0,
+          recordedAt: "2026-07-10T12:00:00.000Z",
+        },
+      ];
+      const storage = createLeaderboardStorage(window.localStorage, vi.fn());
+      storage.save(entries);
+      const firstTimestamp = 0;
+      const secondTimestamp = 180;
+      const thirdTimestamp = 360;
+
+      render(<Game dependencies={dependencies} />);
+      fireEvent.change(screen.getByRole("textbox", { name: "Player name" }), {
+        target: { value: "Ada" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Play" }));
+      fireEvent.keyDown(window, { key: "ArrowRight" });
+      act(() => frames.shift()?.(firstTimestamp));
+      act(() => frames.shift()?.(secondTimestamp));
+      act(() => frames.shift()?.(thirdTimestamp));
+
+      const currentRows = screen
+        .getAllByRole("row")
+        .filter((row) => row.getAttribute("aria-current") === "true");
+
+      expect(currentRows).toHaveLength(1);
+      expect(within(currentRows[0]).getByText("11.07.2026")).toBeVisible();
+
+      fireEvent.keyDown(window, { key: "Enter" });
+
+      expect(screen.getByText("Ready?")).toBeVisible();
+      expect(
+        screen
+          .getAllByRole("row")
+          .filter((row) => row.hasAttribute("aria-current")),
+      ).toHaveLength(0);
     });
 
     it("records a completed run in the leaderboard", () => {
@@ -257,6 +334,9 @@ describe("Game", () => {
       act(() => frames.shift()?.(secondTimestamp));
 
       expect(screen.getByText("You Win")).toBeVisible();
+      expect(
+        screen.getByRole("heading", { name: "Leaderboard" }),
+      ).toBeVisible();
       expect(screen.getByRole("cell", { name: "Ada" })).toBeVisible();
       expect(screen.getByRole("cell", { name: "10" })).toBeVisible();
     });
@@ -291,6 +371,9 @@ describe("Game", () => {
       fireEvent.keyDown(window, startKey);
       expect(screen.queryByText("Ready?")).not.toBeInTheDocument();
       expect(
+        screen.queryByRole("heading", { name: "Leaderboard" }),
+      ).not.toBeInTheDocument();
+      expect(
         screen.queryByRole("button", { name: "Change player" }),
       ).not.toBeInTheDocument();
 
@@ -303,6 +386,9 @@ describe("Game", () => {
       ).toBeInTheDocument();
       expect(screen.getByLabelText("Lives 2")).toBeInTheDocument();
       expect(screen.queryByText("Ready?")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { name: "Leaderboard" }),
+      ).not.toBeInTheDocument();
       expect(
         screen
           .getByRole("img", { name: /snake game board/i })

@@ -1,11 +1,13 @@
 import { useState, type ChangeEvent, type FC, type FormEvent } from "react";
 
 interface PlayerNameFormProps {
+  readonly isCompact: boolean;
   readonly maximumLength: number;
   readonly onSubmit: (input: string) => void;
 }
 
 export const PlayerNameForm: FC<PlayerNameFormProps> = ({
+  isCompact,
   maximumLength,
   onSubmit,
 }) => {
@@ -21,37 +23,35 @@ export const PlayerNameForm: FC<PlayerNameFormProps> = ({
   };
 
   return (
-    <div className="absolute inset-1 grid place-items-center rounded-xl bg-neon-ink/78 p-6 text-center backdrop-blur-[2px]">
-      <form
-        className="w-full max-w-sm rounded-2xl border border-neon-violet/50 bg-neon-panel/90 px-6 py-5 shadow-[0_0_35px_rgba(139,92,246,0.25)]"
-        onSubmit={handleSubmit}
+    <form
+      className={`mx-auto w-full max-w-sm shrink-0 rounded-2xl border border-neon-violet/50 bg-neon-panel/90 shadow-[0_0_35px_rgba(139,92,246,0.25)] ${isCompact ? "px-3 py-2" : "px-6 py-4"}`}
+      onSubmit={handleSubmit}
+    >
+      <p className="font-mono text-xs uppercase tracking-[0.28em] text-neon-cyan">
+        New player
+      </p>
+      <label
+        className={`${isCompact ? "mt-1" : "mt-3"} block text-left font-mono text-xs uppercase tracking-wider text-neon-muted`}
+        htmlFor="player-name"
       >
-        <p className="font-mono text-xs uppercase tracking-[0.28em] text-neon-cyan">
-          New player
-        </p>
-        <label
-          className="mt-3 block text-left font-mono text-xs uppercase tracking-wider text-neon-muted"
-          htmlFor="player-name"
-        >
-          Player name
-        </label>
-        <input
-          autoFocus
-          className="mt-2 w-full rounded-lg border border-neon-violet/60 bg-neon-ink px-3 py-2 font-mono text-white outline-none focus:border-neon-cyan"
-          id="player-name"
-          maxLength={maximumLength}
-          onChange={handleInputChange}
-          placeholder="Optional"
-          type="text"
-          value={input}
-        />
-        <button
-          className="mt-4 rounded-lg border border-neon-lime/70 bg-neon-lime/10 px-5 py-2 font-mono text-xs font-bold uppercase tracking-wider text-neon-lime"
-          type="submit"
-        >
-          Play
-        </button>
-      </form>
-    </div>
+        Player name
+      </label>
+      <input
+        autoFocus
+        className={`${isCompact ? "mt-1 py-1" : "mt-2 py-2"} w-full rounded-lg border border-neon-violet/60 bg-neon-ink px-3 font-mono text-white outline-none focus:border-neon-cyan`}
+        id="player-name"
+        maxLength={maximumLength}
+        onChange={handleInputChange}
+        placeholder="Optional"
+        type="text"
+        value={input}
+      />
+      <button
+        className={`${isCompact ? "mt-2 py-1" : "mt-4 py-2"} rounded-lg border border-neon-lime/70 bg-neon-lime/10 px-5 font-mono text-xs font-bold uppercase tracking-wider text-neon-lime`}
+        type="submit"
+      >
+        Play
+      </button>
+    </form>
   );
 };

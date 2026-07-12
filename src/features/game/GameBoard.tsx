@@ -11,6 +11,7 @@ interface GameBoardProps {
   readonly foodFadeInMs: number;
   readonly lifeLossPulseMs: number;
   readonly maximumSizePx: number;
+  readonly minimumSizePx: number;
 }
 
 export const GameBoard: FC<GameBoardProps> = ({
@@ -20,6 +21,7 @@ export const GameBoard: FC<GameBoardProps> = ({
   foodFadeInMs,
   lifeLossPulseMs,
   maximumSizePx,
+  minimumSizePx,
 }) => {
   const cellElements = cells.map(({ intent, key }) => (
     <span
@@ -42,7 +44,7 @@ export const GameBoard: FC<GameBoardProps> = ({
           gridTemplateColumns: `repeat(${board.width}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${board.height}, minmax(0, 1fr))`,
           maxWidth: `${maximumSizePx}px`,
-          width: `min(92vw, calc((100vh - 14rem) * ${board.width / board.height}), ${maximumSizePx}px)`,
+          width: `min(92vw, max(${minimumSizePx}px, calc((100vh - 14rem) * ${board.width / board.height})), ${maximumSizePx}px)`,
         } as CSSProperties
       }
     >

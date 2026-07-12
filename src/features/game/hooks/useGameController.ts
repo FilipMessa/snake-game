@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type RefObject } from "react";
 
 import { UI_CONFIG } from "../Game.config";
 import { createBoardCells, type BoardCell } from "../GameBoardService";
-import type { LeaderboardEntry } from "../LeaderboardService";
 import { resolvePlayerName } from "../PlayerNameService";
 import { createGameState, transitionGame } from "../GameService";
 import type {
@@ -12,15 +11,18 @@ import type {
   GameState,
 } from "../Game.types";
 import { useGameAudio, type UseGameAudioResult } from "./useGameAudio";
-import { useLeaderboard } from "./useLeaderboard";
+import { useLeaderboard, type LeaderboardPresentation } from "./useLeaderboard";
 import { useGameLoop } from "./useGameLoop";
+import { useNarrowBoard } from "./useNarrowBoard";
 
 export type UseGameControllerResult = Readonly<{
   audio: UseGameAudioResult;
+  boardAreaRef: RefObject<HTMLElement | null>;
   boardCells: ReadonlyArray<BoardCell>;
   changePlayer: () => void;
   isCollisionLocked: boolean;
-  leaderboardEntries: ReadonlyArray<LeaderboardEntry>;
+  isNarrowBoard: boolean;
+  leaderboard: LeaderboardPresentation;
   playerName: string | null;
   state: GameState;
   submitPlayer: (input: string) => void;
@@ -45,18 +47,26 @@ export function useGameController(
   const inputEnabled = playerName !== null;
   const isCollisionLocked = state.status === "active" && state.collisionLocked;
   const boardCells = createBoardCells(dependencies.config.board, state);
-  const leaderboardEntries = useLeaderboard(
+  const leaderboard = useLeaderboard(
     state,
     playerName,
     UI_CONFIG.leaderboard.maximumEntries,
+  );
+  const clearCurrentLeaderboardEntry = leaderboard.clearCurrentEntry;
+  const boardPresentation = useNarrowBoard(
+    UI_CONFIG.leaderboard.narrowBoardThresholdPx,
   );
   const audio = useGameAudio(state);
 
   const dispatch = useCallback(
     (event: GameEvent): void => {
+      if (event.type === "restart") {
+        clearCurrentLeaderboardEntry();
+      }
+
       setState((current) => transitionGame(current, event, dependencies));
     },
-    [dependencies],
+    [clearCurrentLeaderboardEntry, dependencies],
   );
 
   useEffect(() => {
@@ -105,15 +115,18 @@ export function useGameController(
   );
 
   const changePlayer = useCallback((): void => {
+    clearCurrentLeaderboardEntry();
     setPlayerName(null);
-  }, []);
+  }, [clearCurrentLeaderboardEntry]);
 
   return {
     audio,
+    boardAreaRef: boardPresentation.boardAreaRef,
     boardCells,
     changePlayer,
     isCollisionLocked,
-    leaderboardEntries,
+    isNarrowBoard: boardPresentation.isNarrowBoard,
+    leaderboard: leaderboard.presentation,
     playerName,
     state,
     submitPlayer,

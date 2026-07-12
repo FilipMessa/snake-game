@@ -3,10 +3,8 @@ import type { FC } from "react";
 import { UI_CONFIG } from "./Game.config";
 import type { GameDependencies } from "./Game.types";
 import { GameBoard } from "./GameBoard";
-import { Leaderboard } from "./Leaderboard";
 import { LiveMessage } from "./LiveMessage";
 import { GameOverlay } from "./GameOverlay";
-import { PlayerNameForm } from "./PlayerNameForm";
 import { PlayerPanel } from "./PlayerPanel";
 import { ScorePanel } from "./ScorePanel";
 import { AudioControls } from "./AudioControls";
@@ -19,10 +17,12 @@ interface GameProps {
 export const Game: FC<GameProps> = ({ dependencies }) => {
   const {
     audio,
+    boardAreaRef,
     boardCells,
     changePlayer,
-    leaderboardEntries,
     isCollisionLocked,
+    isNarrowBoard,
+    leaderboard,
     playerName,
     state,
     submitPlayer,
@@ -66,23 +66,26 @@ export const Game: FC<GameProps> = ({ dependencies }) => {
         />
       </header>
 
-      <section className="relative" aria-label="Game area">
+      <section aria-label="Game area" className="relative" ref={boardAreaRef}>
         <GameBoard
           board={dependencies.config.board}
           cells={boardCells}
           foodFadeInMs={UI_CONFIG.animation.foodFadeInMs}
           lifeLossPulseMs={UI_CONFIG.animation.lifeLossPulseMs}
           maximumSizePx={UI_CONFIG.board.maximumSizePx}
+          minimumSizePx={UI_CONFIG.board.minimumSizePx}
           isCollisionLocked={isCollisionLocked}
         />
-        {playerName === null ? (
-          <PlayerNameForm
-            maximumLength={UI_CONFIG.leaderboard.maximumPlayerNameLength}
-            onSubmit={submitPlayer}
-          />
-        ) : (
-          <GameOverlay state={state} />
-        )}
+        <GameOverlay
+          isPlayerFormOpen={playerName === null}
+          isNarrowBoard={isNarrowBoard}
+          leaderboard={leaderboard}
+          maximumPlayerNameLength={
+            UI_CONFIG.leaderboard.maximumPlayerNameLength
+          }
+          onSubmitPlayer={submitPlayer}
+          state={state}
+        />
       </section>
 
       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-muted sm:text-xs">
@@ -90,7 +93,6 @@ export const Game: FC<GameProps> = ({ dependencies }) => {
         {dependencies.config.session.initialLives} lives
       </p>
       <LiveMessage state={state} />
-      <Leaderboard entries={leaderboardEntries} />
     </main>
   );
 };

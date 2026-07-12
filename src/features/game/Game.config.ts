@@ -32,9 +32,11 @@ export const UI_CONFIG = {
   },
   board: {
     maximumSizePx: 640,
+    minimumSizePx: 240,
   },
   leaderboard: {
     maximumEntries: 10,
     maximumPlayerNameLength: 20,
+    narrowBoardThresholdPx: 480,
   },
 } as const;
