@@ -2,7 +2,6 @@ import { useCallback, type RefObject } from "react";
 
 import { UI_CONFIG } from "../Game.config";
 import { createBoardCells, type BoardCell } from "../GameBoardService";
-import { canChangePlayer } from "../PlayerNameService";
 import type { GameDependencies, GameEvent, GameState } from "../Game.types";
 import { useGameAudio, type UseGameAudioResult } from "./useGameAudio";
 import { useGameSession } from "./useGameSession";
@@ -37,6 +36,7 @@ export function useGameController(
   const { state } = gameSession;
   const { playerName } = playerSession;
   const inputEnabled = playerName !== null;
+  const canChangePlayer = state.status !== "active";
   const isCollisionLocked = state.status === "active" && state.collisionLocked;
   const boardCells = createBoardCells(dependencies.config.board, state);
   const leaderboard = useLeaderboard(
@@ -86,7 +86,7 @@ export function useGameController(
     audio,
     boardAreaRef: boardPresentation.boardAreaRef,
     boardCells,
-    canChangePlayer: canChangePlayer(state.status),
+    canChangePlayer,
     changePlayer,
     isCollisionLocked,
     isNarrowBoard: boardPresentation.isNarrowBoard,
