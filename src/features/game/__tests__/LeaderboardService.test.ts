@@ -2,12 +2,69 @@ import { describe, expect, it } from "vitest";
 
 import {
   LeaderboardValidationError,
+  recordCompletedRun,
   recordLeaderboardResult,
   restoreLeaderboard,
   type LeaderboardEntry,
 } from "../LeaderboardService";
 
 describe("LeaderboardService", () => {
+  describe("recordCompletedRun", () => {
+    it("records and highlights a run when gameplay enters game over", () => {
+      const outcome = recordCompletedRun(
+        [],
+        {
+          playerName: "Ada",
+          previousStatus: "active",
+          recordedAt: "2026-07-11T12:00:00.000Z",
+          score: 40,
+          status: "game-over",
+        },
+        10,
+      );
+
+      expect(outcome).toEqual({
+        didRecord: true,
+        entries: [
+          {
+            playerName: "Ada",
+            recordedAt: "2026-07-11T12:00:00.000Z",
+            score: 40,
+          },
+        ],
+        recordedEntry: {
+          playerName: "Ada",
+          recordedAt: "2026-07-11T12:00:00.000Z",
+          score: 40,
+        },
+      });
+    });
+
+    it("does not record a terminal transition without a player", () => {
+      const entries: ReadonlyArray<LeaderboardEntry> = [
+        {
+          playerName: "Grace",
+          recordedAt: "2026-07-10T12:00:00.000Z",
+          score: 20,
+        },
+      ];
+
+      expect(
+        recordCompletedRun(
+          entries,
+          {
+            playerName: null,
+            previousStatus: "active",
+            recordedAt: "2026-07-11T12:00:00.000Z",
+            score: 40,
+            status: "completed",
+          },
+          10,
+        ),
+      ).toEqual({ didRecord: false, entries, recordedEntry: null });
+    });
+  });
+
   describe("recordLeaderboardResult", () => {
     it("returns entries ordered by descending score", () => {
       const entries: ReadonlyArray<LeaderboardEntry> = [

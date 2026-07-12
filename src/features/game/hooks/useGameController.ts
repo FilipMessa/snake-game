@@ -1,24 +1,22 @@
-import { useCallback, useEffect, useState, type RefObject } from "react";
+import { useCallback, type RefObject } from "react";
 
 import { UI_CONFIG } from "../Game.config";
 import { createBoardCells, type BoardCell } from "../GameBoardService";
-import { resolvePlayerName } from "../PlayerNameService";
-import { createGameState, transitionGame } from "../GameService";
-import type {
-  Direction,
-  GameDependencies,
-  GameEvent,
-  GameState,
-} from "../Game.types";
+import { canChangePlayer } from "../PlayerNameService";
+import type { GameDependencies, GameEvent, GameState } from "../Game.types";
 import { useGameAudio, type UseGameAudioResult } from "./useGameAudio";
+import { useGameSession } from "./useGameSession";
 import { useLeaderboard, type LeaderboardPresentation } from "./useLeaderboard";
 import { useGameLoop } from "./useGameLoop";
+import { useKeyboardControls } from "./useKeyboardControls";
 import { useNarrowBoard } from "./useNarrowBoard";
+import { usePlayerSession } from "./usePlayerSession";
 
 export type UseGameControllerResult = Readonly<{
   audio: UseGameAudioResult;
   boardAreaRef: RefObject<HTMLElement | null>;
   boardCells: ReadonlyArray<BoardCell>;
+  canChangePlayer: boolean;
   changePlayer: () => void;
   isCollisionLocked: boolean;
   isNarrowBoard: boolean;
@@ -28,22 +26,16 @@ export type UseGameControllerResult = Readonly<{
   submitPlayer: (input: string) => void;
 }>;
 
-const DIRECTION_BY_KEY: Readonly<Record<string, Direction>> = {
-  arrowup: "up",
-  w: "up",
-  arrowdown: "down",
-  s: "down",
-  arrowleft: "left",
-  a: "left",
-  arrowright: "right",
-  d: "right",
-};
-
 export function useGameController(
   dependencies: GameDependencies,
 ): UseGameControllerResult {
-  const [playerName, setPlayerName] = useState<string | null>(null);
-  const [state, setState] = useState(() => createGameState(dependencies));
+  const gameSession = useGameSession(dependencies);
+  const playerSession = usePlayerSession(
+    UI_CONFIG.leaderboard.maximumPlayerNameLength,
+    dependencies.random,
+  );
+  const { state } = gameSession;
+  const { playerName } = playerSession;
   const inputEnabled = playerName !== null;
   const isCollisionLocked = state.status === "active" && state.collisionLocked;
   const boardCells = createBoardCells(dependencies.config.board, state);
@@ -64,35 +56,12 @@ export function useGameController(
         clearCurrentLeaderboardEntry();
       }
 
-      setState((current) => transitionGame(current, event, dependencies));
+      gameSession.dispatch(event);
     },
-    [clearCurrentLeaderboardEntry, dependencies],
+    [clearCurrentLeaderboardEntry, gameSession],
   );
 
-  useEffect(() => {
-    if (!inputEnabled) {
-      return undefined;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      const normalizedKey = event.key.toLowerCase();
-      const direction = DIRECTION_BY_KEY[normalizedKey];
-
-      if (direction !== undefined) {
-        event.preventDefault();
-        dispatch({ type: "direction", direction });
-        return;
-      }
-
-      if (normalizedKey === "enter") {
-        event.preventDefault();
-        dispatch({ type: "restart" });
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [dispatch, inputEnabled]);
+  useKeyboardControls({ enabled: inputEnabled, onEvent: dispatch });
 
   useGameLoop({
     isRunning: inputEnabled && state.status === "active",
@@ -103,26 +72,21 @@ export function useGameController(
   const submitPlayer = useCallback(
     (input: string): void => {
       dispatch({ type: "restart" });
-      setPlayerName(
-        resolvePlayerName(
-          input,
-          UI_CONFIG.leaderboard.maximumPlayerNameLength,
-          dependencies.random,
-        ),
-      );
+      playerSession.selectPlayer(input);
     },
-    [dependencies.random, dispatch],
+    [dispatch, playerSession],
   );
 
   const changePlayer = useCallback((): void => {
     clearCurrentLeaderboardEntry();
-    setPlayerName(null);
-  }, [clearCurrentLeaderboardEntry]);
+    playerSession.clearPlayer();
+  }, [clearCurrentLeaderboardEntry, playerSession]);
 
   return {
     audio,
     boardAreaRef: boardPresentation.boardAreaRef,
     boardCells,
+    canChangePlayer: canChangePlayer(state.status),
     changePlayer,
     isCollisionLocked,
     isNarrowBoard: boardPresentation.isNarrowBoard,

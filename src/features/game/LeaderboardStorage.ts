@@ -2,55 +2,31 @@ import {
   restoreLeaderboard,
   type LeaderboardEntry,
 } from "./LeaderboardService";
+import {
+  createJsonStorage,
+  type JsonStorage,
+  type KeyValueStorage,
+  type ReportStorageError,
+} from "./JsonStorage";
 
-type ReportStorageError = (message: string, error: unknown) => void;
-type BrowserStorage = Pick<Storage, "getItem" | "setItem">;
-
-export interface LeaderboardStorage {
-  load(maximumEntries: number): ReadonlyArray<LeaderboardEntry>;
-  save(entries: ReadonlyArray<LeaderboardEntry>): void;
-}
+export type LeaderboardStorage = JsonStorage<
+  ReadonlyArray<LeaderboardEntry>,
+  [maximumEntries: number]
+>;
 
 const LEADERBOARD_STORAGE_KEY = "neon-snake.leaderboard.v1";
 
 export function createLeaderboardStorage(
-  storage: BrowserStorage,
+  storage: KeyValueStorage,
   reportError: ReportStorageError,
 ): LeaderboardStorage {
-  let hasReportedLoadError = false;
-  let hasReportedSaveError = false;
-
-  return {
-    load(maximumEntries) {
-      try {
-        const serializedEntries = storage.getItem(LEADERBOARD_STORAGE_KEY);
-
-        if (serializedEntries === null) {
-          return [];
-        }
-
-        return restoreLeaderboard(
-          JSON.parse(serializedEntries),
-          maximumEntries,
-        );
-      } catch (error) {
-        if (!hasReportedLoadError) {
-          reportError("Unable to load the leaderboard.", error);
-          hasReportedLoadError = true;
-        }
-
-        return [];
-      }
+  return createJsonStorage(storage, reportError, {
+    defaultValue: [],
+    key: LEADERBOARD_STORAGE_KEY,
+    loadErrorMessage: "Unable to load the leaderboard.",
+    restore(value, maximumEntries): ReadonlyArray<LeaderboardEntry> {
+      return restoreLeaderboard(value, maximumEntries);
     },
-    save(entries) {
-      try {
-        storage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(entries));
-      } catch (error) {
-        if (!hasReportedSaveError) {
-          reportError("Unable to save the leaderboard.", error);
-          hasReportedSaveError = true;
-        }
-      }
-    },
-  };
+    saveErrorMessage: "Unable to save the leaderboard.",
+  });
 }

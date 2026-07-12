@@ -1,3 +1,5 @@
+import type { GameStatus } from "./Game.types";
+
 const GENERATED_NAME_RANGE = 10_000;
 
 export class PlayerNameValidationError extends Error {
@@ -13,6 +15,10 @@ function createGeneratedPlayerName(random: () => number): string {
     .padStart(4, "0");
 
   return `Player-${suffix}`;
+}
+
+export function canChangePlayer(status: GameStatus): boolean {
+  return status !== "active";
 }
 
 export function resolvePlayerName(
